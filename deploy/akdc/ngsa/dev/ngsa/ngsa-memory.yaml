@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ngsa-memory
+  namespace: ngsa
+  labels:
+    app.kubernetes.io/name: ngsa-memory
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+       maxSurge: 1
+       maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: ngsa-memory
+  template:
+    metadata:
+      labels:
+        app: ngsa-memory
+        deploy: 22-02-02-02-42-54
+    spec:
+      containers:
+        - name: app
+          image: ghcr.io/retaildevcrews/ngsa-app:beta
+          imagePullPolicy: Always
+          args: 
+          - --in-memory
+          - --prometheus
+          - --zone
+          - centralus
+          - --region
+          - akdc
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ngsa-memory
+  namespace: ngsa
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      nodePort: 30080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: ngsa-memory
