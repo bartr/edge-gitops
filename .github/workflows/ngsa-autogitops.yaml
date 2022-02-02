@@ -1,0 +1,33 @@
+name: GitOps Deploy
+
+on:
+
+  push:
+    branches:
+      - main
+
+    paths:
+    - 'Dockerfile'
+    - '.github/workflows/ngsa-autogitops.yaml'
+    - 'autogitops/**'
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-20.04
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Docker pull
+      run: |
+        docker pull ghcr.io/bartr/autogitops
+
+    - name: GitOps Deploy
+      run: |
+        docker run \
+        --name ago \
+        --rm \
+        -v $(pwd)/autogitops:/ago/autogitops \
+        ghcr.io/bartr/autogitops -r /bartr/edge-gitops -p ${{ secrets.GHCR_PAT }}

@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{gitops.name}}-memory
+  namespace: {{gitops.namespace}}
+  labels:
+    app.kubernetes.io/name: {{gitops.name}}-memory
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+       maxSurge: 1
+       maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: {{gitops.name}}-memory
+  template:
+    metadata:
+      labels:
+        app: {{gitops.name}}-memory
+        deploy: {{gitops.deploy}}
+    spec:
+      containers:
+        - name: app
+          image: {{gitops.imageName}}:{{gitops.imageTag}}
+          imagePullPolicy: Always
+          args: 
+          - --in-memory
+          - --prometheus
+          - --zone
+          - {{gitops.config.zone}}
+          - --region
+          - {{gitops.config.region}}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{gitops.name}}-memory
+  namespace: {{gitops.namespace}}
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      nodePort: 30080
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: {{gitops.name}}-memory
